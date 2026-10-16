@@ -1,5 +1,7 @@
 # Changelog
 
+## v1.1.20
+- more vixes new fersion numbar
 
 ## v1.1.191
 - Minor Fixes
