@@ -226,6 +226,8 @@ void TitlesComponent::initHooks() {
 	hookEventPost(Events::GFxHUD_TA_HandleReplaceBot, [this](std::string event) { runCommand(Commands::broadcast, event); });
 
 	hookEventPost(Events::GFxData_PRI_TA_SetPlayerTitle, [this](std::string) { refreshPriTitlePresets(); });
+	hookEventPost(Events::GameEvent_TA_Countdown_BeginState, [this](std::string) { refreshPriTitlePresets(); });
+	hookEventPost(Events::GameEvent_Soccar_TA_Active_StartRound, [this](std::string) { refreshPriTitlePresets(); });
 	hookEventPost(Events::EngineShare_X_EventPreLoadMap, [this](std::string) { m_ingamePresets.clear(); });
 
 	hookEvent(Events::PlayerController_EnterStartState, [this](...) {
@@ -426,6 +428,8 @@ void TitlesComponent::refreshPriTitlePresets(AGFxHUD_TA *hud) {
 			return;
 	}
 
+	loadBotTitles();
+
 	// first reset all pri rows to their default titles
 	for (auto *pri : hud->PRIData) {
 		if (!validUObject(pri))
@@ -449,8 +453,19 @@ void TitlesComponent::refreshPriTitlePresets(AGFxHUD_TA *hud) {
 				continue;
 
 			auto it = m_ingamePresets.find(pri);
-			if (it == m_ingamePresets.end())
+			if (it == m_ingamePresets.end()) {
+				// no preset yet: is this a player (bot) listed in bot_titles.json?
+				if (!*m_enabled || m_botTitles.empty() || !validUObject(pri->PRI) || pri->PRI == hud->OwnerPRI)
+					continue;
+
+				const TitleAppearance *botTitle = findBotTitle(pri->PRI->PlayerName.ToString());
+				if (!botTitle)
+					continue;
+
+				m_ingamePresets.addPreset(pri, *botTitle);
+				applyPresetToPri(pri, *botTitle);
 				continue;
+			}
 
 			applyPresetToPri(pri, it->second);
 		}
@@ -458,6 +473,50 @@ void TitlesComponent::refreshPriTitlePresets(AGFxHUD_TA *hud) {
 
 	// lil 0.1s delay to allow side effect functions from HandleTitleChanged to finish executing
 	DELAY(0.1f, { applyExistingPresetsToPris(); }, applyExistingPresetsToPris);
+}
+
+void TitlesComponent::loadBotTitles(bool force) {
+	if (m_botTitlesJson.empty())
+		m_botTitlesJson = m_pluginFolder / "bot_titles.json";
+
+	std::error_code ec;
+	if (!fs::exists(m_botTitlesJson, ec)) {
+		m_botTitles.clear();
+		return;
+	}
+
+	auto stamp = fs::last_write_time(m_botTitlesJson, ec);
+	if (ec)
+		return;
+	if (!force && stamp == m_botTitlesStamp)
+		return; // unchanged since last load
+	m_botTitlesStamp = stamp;
+
+	m_botTitles.clear();
+	json j = Files::get_json(m_botTitlesJson);
+	if (j.empty() || !j.contains("titles") || !j["titles"].is_object())
+		return;
+
+	for (auto it = j["titles"].begin(); it != j["titles"].end(); ++it) {
+		TitleAppearance title;
+		title.fromJson(it.value());
+		m_botTitles[it.key()] = title;
+	}
+
+	LOG("Loaded {} bot titles from bot_titles.json", m_botTitles.size());
+}
+
+const TitleAppearance *TitlesComponent::findBotTitle(const std::string &ingameName) const {
+	for (const auto &entry : m_botTitles) {
+		const std::string &name = entry.first;
+		if (ingameName == name)
+			return &entry.second;
+
+		const std::string tail = "| " + name; // "Team Tag | Player Name"
+		if (ingameName.size() >= tail.size() && ingameName.compare(ingameName.size() - tail.size(), tail.size(), tail) == 0)
+			return &entry.second;
+	}
+	return nullptr;
 }
 
 TitleAppearance *TitlesComponent::getActivePreset(bool log) {
