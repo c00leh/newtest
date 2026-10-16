@@ -1,9 +1,11 @@
 # Changelog
 
 
+## v1.1.191
+- Minor Fixes
+
 ## v1.1.19
 - Added optional bot_titles.json: apply titles to other players (e.g. RLBot bots) by in-game name
-
 
 ## v1.1.18
 - Fixed game crashes
