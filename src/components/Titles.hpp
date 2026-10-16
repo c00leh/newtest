@@ -149,6 +149,13 @@ private:
 	std::vector<GameTitleAppearance> m_gameTitles; // vector preserves the order that they were found in the title config
 	InGamePresetManager              m_ingamePresets;
 
+	// Titles for other players (e.g. RLBot bots) read from <data>/CustomTitle/bot_titles.json
+	//   { "titles": { "Player Name": { "text": "{champion} S1 Champion", "textColor": "0xFFD700FF", "glowColor": "0xFFD700FF" } } }
+	// A player matches if their in-game name is exactly "Player Name" or ends with "| Player Name" (team/title tags).
+	fs::path                                         m_botTitlesJson;
+	fs::file_time_type                               m_botTitlesStamp{};
+	std::unordered_map<std::string, TitleAppearance> m_botTitles;
+
 	bool        m_shouldOverwriteGetTitleDataReturnVal = false; // what a name
 	std::string m_selectedTitleIdStr;
 	FName       m_selectedTitleId;
@@ -162,6 +169,9 @@ private:
 	inline fs::path getPluginFolder() const { return m_pluginFolder; }
 
 	void removeUserCustomTitle();
+
+	void                   loadBotTitles(bool force = false);
+	const TitleAppearance *findBotTitle(const std::string &ingameName) const;
 
 	void refreshPriTitlePresets(AGFxHUD_TA *hud = nullptr);
 	void updateGameTitleAppearances(UTitleConfig_X *config = nullptr, bool forceSearch = false);
