@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.1.22
+## v1.1.23
 - wanna guess what was added? Minor fixes because its still broken
 -  
 ## v1.1.22
