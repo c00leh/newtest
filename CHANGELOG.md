@@ -1,8 +1,10 @@
 # Changelog
 
+## v1.1.22
+- Minor fix to application
+- 
 ## v1.1.21
 - added debug
-
   
 ## v1.1.20
 - more vixes new fersion numbar
