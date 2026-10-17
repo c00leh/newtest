@@ -174,6 +174,8 @@ private:
 	const TitleAppearance *findBotTitle(const std::string &ingameName) const;
 
 	void refreshPriTitlePresets(AGFxHUD_TA *hud = nullptr);
+	void applyBotTitlesToAllGfxPris(); // spectator-friendly: scans every live UGFxData_PRI_TA, not just hud->PRIData
+
 	void updateGameTitleAppearances(UTitleConfig_X *config = nullptr, bool forceSearch = false);
 
 	FName getCustomTitleId();
