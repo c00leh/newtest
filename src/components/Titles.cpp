@@ -59,6 +59,17 @@ void TitlesComponent::initHooks() {
 	// this hook only applies RGB titles (bc they require updating every frame)
 	// ...non-RGB presets have to rely on other hooks
 	hookWithCallerPost(Events::HUDBase_TA_DrawHUD, [this](ActorWrapper Caller, ...) {
+		// Spectator support: hud->PRIData is empty while spectating, so once a second apply bot titles to
+		// every live UGFxData_PRI_TA object instead.
+		{
+			static auto lastScan = std::chrono::steady_clock::now();
+			auto        now      = std::chrono::steady_clock::now();
+			if (now - lastScan >= std::chrono::seconds(1)) {
+				lastScan = now;
+				applyBotTitlesToAllGfxPris();
+			}
+		}
+
 		TitleAppearance *preset            = getActivePreset(false);
 		bool             bannerHasRGB      = preset && preset->usesRGB();
 		bool             gameHasRGBPresets = m_ingamePresets.rgbPresetsExist();
@@ -476,6 +487,39 @@ void TitlesComponent::refreshPriTitlePresets(AGFxHUD_TA *hud) {
 
 	// lil 0.1s delay to allow side effect functions from HandleTitleChanged to finish executing
 	DELAY(0.1f, { applyExistingPresetsToPris(); }, applyExistingPresetsToPris);
+}
+
+void TitlesComponent::applyBotTitlesToAllGfxPris() {
+	if (!*m_enabled)
+		return;
+	loadBotTitles();
+	if (m_botTitles.empty())
+		return;
+
+	auto *hud      = getGFxHUD();
+	auto  gfxPris  = Instances.getAllInstancesOf<UGFxData_PRI_TA>();
+	static size_t lastCount = SIZE_MAX;
+	if (gfxPris.size() != lastCount) {
+		LOG("[bots] spectator scan: {} live UGFxData_PRI_TA objects (hud rows: {})", gfxPris.size(), hud ? (int)hud->PRIData.size() : -1);
+		lastCount = gfxPris.size();
+	}
+
+	for (auto *pri : gfxPris) {
+		if (!validUObject(pri) || !validUObject(pri->PRI))
+			continue;
+		if (hud && pri->PRI == hud->OwnerPRI)
+			continue; // never touch the user's own row
+
+		const std::string      name  = pri->PRI->PlayerName.ToString();
+		const TitleAppearance *title = findBotTitle(name);
+		if (!title)
+			continue;
+
+		if (!pri->bBotPlayer && pri->XPTitle.ToString() == title->getText())
+			continue; // already showing the right title
+
+		applyPresetToPri(pri, *title, true);
+	}
 }
 
 void TitlesComponent::loadBotTitles(bool force) {
