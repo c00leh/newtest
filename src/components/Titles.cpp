@@ -946,12 +946,26 @@ void TitlesComponent::applyPresetToPri(UGFxData_PRI_TA *pri, const TitleAppearan
 		return;
 
 	GfxWrapper gfxPri{ pri };
+
+	// The scoreboard row has a bBotPlayer flag, and the UI very likely hides the title line for rows flagged as bots
+	// (real players always have a title slot). Clear it so bot rows are treated like player rows.
+	const bool wasBotFlagged = pri->bBotPlayer;
+	if (wasBotFlagged) {
+		pri->bBotPlayer = 0;
+		gfxPri.set_bool(L"bBotPlayer", false);
+	}
+
 	gfxPri.set_string(L"XPTitle", title.getTextFStr());
 	gfxPri.set_int(L"TitleColor", title.getIntTextColor());
 	gfxPri.set_int(L"TitleGlowColor", title.getIntGlowColor());
 
 	if (log)
-		LOG("Applied title preset for {} ... (UGFxData_PRI_TA: {})", pri->PlayerName, pri);
+		LOG("Applied title preset for {} ... (UGFxData_PRI_TA: {}) [bBotPlayer was {}, now {}] [XPTitle read back: \"{}\"]",
+		    pri->PlayerName,
+		    pri,
+		    wasBotFlagged,
+		    (bool)pri->bBotPlayer,
+		    pri->XPTitle.ToString());
 }
 
 void TitlesComponent::applyPresetToBanner(const TitleAppearance &title, UGFxDataRow_X *gfxRow, bool log) {
