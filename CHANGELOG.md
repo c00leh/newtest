@@ -1,6 +1,9 @@
 # Changelog
 
 ## v1.1.22
+- wanna guess what was added? Minor fixes because its still broken
+-  
+## v1.1.22
 - Minor fix to application
 - 
 ## v1.1.21
