@@ -51,8 +51,9 @@ void TitlesComponent::setFilePaths() {
 
 void TitlesComponent::initHooks() {
 	hookEventPost(Events::GFxHUD_TA_OpenScoreboard, [this](...) {
-		LOG("Applying custom title after scoreboard opened...");
-		applySelectedAppearanceToUser();
+	    LOG("Applying custom title after scoreboard opened...");
+	    applySelectedAppearanceToUser();
+	    refreshPriTitlePresets();
 	});
 
 	// this hook only applies RGB titles (bc they require updating every frame)
