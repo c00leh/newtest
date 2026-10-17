@@ -429,7 +429,7 @@ void TitlesComponent::refreshPriTitlePresets(AGFxHUD_TA *hud) {
 	}
 
 	loadBotTitles();
-
+	LOG("[bots] refresh: {} rows, {} bot titles", hud->PRIData.size(), m_botTitles.size());
 	// first reset all pri rows to their default titles
 	for (auto *pri : hud->PRIData) {
 		if (!validUObject(pri))
@@ -458,12 +458,14 @@ void TitlesComponent::refreshPriTitlePresets(AGFxHUD_TA *hud) {
 				if (!*m_enabled || m_botTitles.empty() || !validUObject(pri->PRI) || pri->PRI == hud->OwnerPRI)
 					continue;
 
-				const TitleAppearance *botTitle = findBotTitle(pri->PRI->PlayerName.ToString());
+				const std::string      rowName  = pri->PRI->PlayerName.ToString();
+				const TitleAppearance *botTitle = findBotTitle(rowName);
+				LOG("[bots] row '{}' -> {}", rowName, botTitle ? "MATCH" : "no match");
 				if (!botTitle)
 					continue;
 
 				m_ingamePresets.addPreset(pri, *botTitle);
-				applyPresetToPri(pri, *botTitle);
+				applyPresetToPri(pri, *botTitle, true);
 				continue;
 			}
 
