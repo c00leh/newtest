@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.21
+- added debug
+
+  
 ## v1.1.20
 - more vixes new fersion numbar
 
