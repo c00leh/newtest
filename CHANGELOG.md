@@ -1,7 +1,9 @@
 # Changelog
-
+## v1.1.24
+- Fix to spectating mode not showing titles
+- 
 ## v1.1.23
-- wanna guess what was added? Minor fixes because its still broken
+- wanna guess what was added? Minor fixes.
 -  
 ## v1.1.22
 - Minor fix to application
